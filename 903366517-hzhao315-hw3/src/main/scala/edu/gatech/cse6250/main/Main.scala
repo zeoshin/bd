@@ -111,20 +111,12 @@ object Main {
     //     println("joined input:")
     //     rawFeatures.join(phenotypeLabel).sortByKey().collect.foreach(println)
 
-    val k = 8
+    val k = 3
     val maxIterations = 20
     val seed = 6250L
     val kmeans = KMeans.train(featureVectors, k, maxIterations, "k-means||", seed)
 
     val kMeansClusterAssignmentAndLabel = rawFeatures.join(phenotypeLabel).map({ case (patientID, (feature, realClass)) => (kmeans.predict(transform(feature)), realClass) })
-
-    val kMeansTable = kMeansClusterAssignmentAndLabel
-      .map { case (clr, cls) => ((clr, cls), 1) }
-      .groupByKey()
-      .map(t => (t._1, t._2.sum))
-
-    println("kMeans")
-    kMeansTable.foreach(println)
 
     val kMeansPurity = Metrics.purity(kMeansClusterAssignmentAndLabel)
 
@@ -140,14 +132,6 @@ object Main {
     val gmm = new GaussianMixture().setSeed(seed).setMaxIterations(maxIterations).setK(k).run(featureVectors)
 
     val gaussianMixtureClusterAssignmentAndLabel = rawFeatures.join(phenotypeLabel).map({ case (patientID, (feature, realClass)) => (gmm.predict(transform(feature)), realClass) })
-
-    val gmmTable = gaussianMixtureClusterAssignmentAndLabel
-      .map { case (clr, cls) => ((clr, cls), 1) }
-      .groupByKey()
-      .map(t => (t._1, t._2.sum))
-
-    println("GMM")
-    gmmTable.foreach(println)
 
     val gaussianMixturePurity = Metrics.purity(gaussianMixtureClusterAssignmentAndLabel)
 
@@ -172,14 +156,6 @@ object Main {
       .latestModel().update(featureVectors, decay, "points")
 
     val streamingClusterAssignmentAndLabel = rawFeatures.join(phenotypeLabel).map({ case (patientID, (feature, realClass)) => (stream.predict(transform(feature)), realClass) })
-
-    val streamTable = streamingClusterAssignmentAndLabel
-      .map { case (clr, cls) => ((clr, cls), 1) }
-      .groupByKey()
-      .map(t => (t._1, t._2.sum))
-
-    println("streamingKMeans")
-    streamTable.foreach(println)
 
     val streamKmeansPurity = Metrics.purity(streamingClusterAssignmentAndLabel)
 
